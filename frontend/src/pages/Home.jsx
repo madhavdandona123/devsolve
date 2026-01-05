@@ -5,10 +5,15 @@ import SolutionForm from '../components/SolutionForm';
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 
-// Sub-component for a clean, toggleable card
 const ProblemCard = ({ p }) => {
   const [isExpanded, setIsExpanded] = useState(false);
-  const isLongText = p.explanation?.length > 120;
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(p.code);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   return (
     <div className="p-6 bg-white border border-slate-200 rounded-3xl shadow-sm hover:shadow-md transition-all">
@@ -24,19 +29,29 @@ const ProblemCard = ({ p }) => {
       
       <p className="text-sm font-bold text-blue-600 uppercase tracking-widest mb-4">{p.platform}</p>
       
+      {/* Explanation Section */}
       <div className="pt-4 border-t border-slate-100">
-        <p className={`text-slate-600 text-lg italic leading-relaxed ${!isExpanded && 'line-clamp-3'}`}>
+        <p className={`text-slate-600 text-lg italic leading-relaxed ${!isExpanded && 'line-clamp-2'}`}>
           "{p.explanation || "No explanation provided."}"
         </p>
-        
-        {isLongText && (
-          <button 
-            onClick={() => setIsExpanded(!isExpanded)}
-            className="mt-3 text-sm font-black text-blue-500 hover:text-blue-700 uppercase tracking-tighter cursor-pointer"
-          >
-            {isExpanded ? "↑ Show Less" : "↓ Read Full Explanation"}
+        {p.explanation?.length > 100 && (
+          <button onClick={() => setIsExpanded(!isExpanded)} className="mt-2 text-xs font-bold text-blue-500 uppercase">
+            {isExpanded ? "Show Less" : "Read More"}
           </button>
         )}
+      </div>
+
+      {/* Code Section - Large and Scrollable for Mobile */}
+      <div className="mt-6 relative">
+        <div className="flex justify-between items-center mb-2">
+          <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Solution Code</span>
+          <button onClick={handleCopy} className="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-md">
+            {copied ? "COPIED!" : "COPY"}
+          </button>
+        </div>
+        <pre className="bg-slate-900 text-slate-100 p-4 rounded-xl text-sm overflow-x-auto font-mono max-h-40">
+          <code>{p.code || "// No code provided"}</code>
+        </pre>
       </div>
     </div>
   );
@@ -55,18 +70,14 @@ export default function Home() {
     <div className="space-y-8 md:space-y-16 pb-10">
       <Hero />
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 md:gap-12">
-        {/* Form: Below activity on mobile */}
         <div className="lg:col-span-3 order-2 lg:order-1">
-          <h2 className="text-3xl md:text-4xl font-black mb-8">Add New Entry</h2>
+          <h2 className="text-3xl font-black mb-8">Add New Entry</h2>
           <SolutionForm onAdd={() => window.location.reload()} />
         </div>
-
-        {/* Recent Activity */}
         <div className="lg:col-span-2 order-1 lg:order-2">
-          <h2 className="text-3xl md:text-4xl font-black mb-8 text-slate-900">Recent Activity</h2>
+          <h2 className="text-3xl font-black mb-8">Recent Activity</h2>
           <div className="grid grid-cols-1 gap-6">
             {recent.map(p => <ProblemCard key={p._id} p={p} />)}
-            {recent.length === 0 && <p className="text-slate-400">No entries yet.</p>}
           </div>
         </div>
       </div>
